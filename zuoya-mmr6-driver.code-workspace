@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"kernel.h": "c",
+			"hid.h": "c",
+			"module.h": "c",
+			"slab.h": "c",
+			"gfp.h": "c"
+		}
+	}
+}
