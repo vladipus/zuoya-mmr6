@@ -32,6 +32,7 @@ struct mmr6_sc
 	unsigned long quirks;
 	unsigned int hw_wheel;
 	__s32 delayed_value;
+	u8 raw_data[7];
 };
 
 static int mmr6_input_mapped(struct hid_device *hdev, struct hid_input *hi,
@@ -49,6 +50,24 @@ static int mmr6_input_mapped(struct hid_device *hdev, struct hid_input *hi,
 	return 0;
 }
 
+static int mmr6_raw_event(struct hid_device *hdev, struct hid_report *report,
+						  u8 *data, int size)
+{
+	printk("MMR6 RAW EVENT");
+	int i;
+
+	for (i = 0; i < size; i++)
+	{
+		printk("%02X", data[i]);
+	}
+
+	struct mmr6_sc *mmr6 = hid_get_drvdata(hdev);
+
+	memcpy(mmr6->raw_data, data, size);
+
+	return 0;
+}
+
 static int mmr6_event(struct hid_device *hdev, struct hid_field *field,
 					  struct hid_usage *usage, __s32 value)
 {
@@ -56,7 +75,7 @@ static int mmr6_event(struct hid_device *hdev, struct hid_field *field,
 	struct mmr6_sc *mmr6 = hid_get_drvdata(hdev);
 	struct input_dev *input;
 
-	printk("[!!!]MMR6");
+	//printk("MMR6 EVENT");
 
 	if (!(hdev->claimed & HID_CLAIMED_INPUT) || !field->hidinput ||
 		!usage->type)
@@ -64,32 +83,73 @@ static int mmr6_event(struct hid_device *hdev, struct hid_field *field,
 
 	input = field->hidinput->input;
 
-	if (mmr6->quirks & MMR6_2WHEEL_MOUSE_HACK_B8)
+	printk("MMR6 type: %d", usage->type);
+	printk("MMR6 code: %04X", usage->code);
+	printk("MMR6 value: %04X", value);
+	printk("MMR6 raw data:");
+
+	int i = 0;
+	for (i = 0; i < 7; i++)
 	{
-		if (usage->type == EV_REL && usage->code == REL_WHEEL)
+		printk("%04X", mmr6->raw_data[i]);
+	}
+
+	if (usage->type == EV_REL)
+	{
+		return 0;
+	}
+
+	if (usage->type == EV_KEY)
+	{
+
+		printk("MMR6 Button: %04X", usage->code);
+		if (usage->code == BTN_LEFT)
 		{
-			mmr6->delayed_value = value;
-			return 1;
+			if (mmr6->raw_data[1] == 0x03)
+				return 1;
+			printk("MMR LMB value: %04X", value);
+			input_event(input, EV_KEY, BTN_LEFT, value);
 		}
-
-		if (usage->hid == 0x000100b8)
+		else if (usage->code == BTN_MIDDLE)
 		{
-			input_event(input, EV_REL, value ? REL_HWHEEL : REL_WHEEL, mmr6->delayed_value);
-			return 1;
+			printk("MMR MMB value: %04X", value);
+			input_event(input, EV_KEY, BTN_MIDDLE, value);
+		}
+		else if (usage->code == BTN_RIGHT)
+		{
+			printk("MMR RMB value: %04X", value);
+			input_event(input, EV_KEY, BTN_RIGHT, value);
 		}
 	}
 
-	if ((mmr6->quirks & MMR6_2WHEEL_MOUSE_HACK_7) && usage->hid == 0x00090007)
-	{
-		mmr6->hw_wheel = !!value;
-		return 1;
-	}
+	return 1;
 
-	if (usage->code == REL_WHEEL && mmr6->hw_wheel)
-	{
-		input_event(input, usage->type, REL_HWHEEL, value);
-		return 1;
-	}
+	// if (mmr6->quirks & MMR6_2WHEEL_MOUSE_HACK_B8)
+	// {
+	// 	if (usage->type == EV_REL && usage->code == REL_WHEEL)
+	// 	{
+	// 		mmr6->delayed_value = value;
+	// 		return 1;
+	// 	}
+
+	// 	if (usage->hid == 0x000100b8)
+	// 	{
+	// 		input_event(input, EV_REL, value ? REL_HWHEEL : REL_WHEEL, mmr6->delayed_value);
+	// 		return 1;
+	// 	}
+	// }
+
+	// if ((mmr6->quirks & MMR6_2WHEEL_MOUSE_HACK_7) && usage->hid == 0x00090007)
+	// {
+	// 	mmr6->hw_wheel = !!value;
+	// 	return 1;
+	// }
+
+	// if (usage->code == REL_WHEEL && mmr6->hw_wheel)
+	// {
+	// 	input_event(input, usage->type, REL_HWHEEL, value);
+	// 	return 1;
+	// }
 
 	return 0;
 }
@@ -137,6 +197,7 @@ static struct hid_driver mmr6_driver = {
 	.name = "hid-zuoya-mmr6",
 	.id_table = mmr6_devices,
 	.input_mapped = mmr6_input_mapped,
+	.raw_event = mmr6_raw_event,
 	.event = mmr6_event,
 	.probe = mmr6_probe,
 };
