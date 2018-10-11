@@ -10,7 +10,9 @@
 			"hid.h": "c",
 			"module.h": "c",
 			"slab.h": "c",
-			"gfp.h": "c"
+			"gfp.h": "c",
+			"input.h": "c",
+			"hid-ids.h": "c"
 		}
 	}
 }

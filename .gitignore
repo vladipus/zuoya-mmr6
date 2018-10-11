@@ -3,3 +3,6 @@
 *.symvers
 *.mk
 *.cmd
+.tmp_versions/*
+modules.order
+hid-mmr6.mod.c
