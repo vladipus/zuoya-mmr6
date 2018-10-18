@@ -51,19 +51,28 @@ static int mmr6_event(struct hid_device *hdev, struct hid_field *field,
 {
 	struct mmr6_sc *mmr6;
 
-	//printk("mmr6_event");
+	//printk("mmr6_event: %X", value);
+
 	mmr6 = hid_get_drvdata(hdev);
 
 	if (!(hdev->claimed & HID_CLAIMED_INPUT) || !field->hidinput ||
 		!usage->type)
 		return 0;
 
-	//printk("mmr6->button: %d", mmr6->button);
+	//printk("mdmr6->button: %X", mmr6->button);
 
 	if (usage->type == EV_KEY)
 	{
-		if (usage->code == BTN_LEFT && mmr6->button == 3)
-			return 1;
+		if (usage->code == BTN_LEFT)
+		{
+			//printk("mdmr6 left button");
+			if (mmr6->button == 3)
+			{
+				//printk("mdmr6 cancel event");
+				return 1;
+			}
+			return 0;
+		}
 		else if (usage->code == BTN_LEFT)
 			return 0;
 		else if (usage->code == BTN_RIGHT)

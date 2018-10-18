@@ -26,4 +26,4 @@ __attribute__((section(".modinfo"))) =
 
 MODULE_ALIAS("hid:b0003g*v000018F8p00001486");
 
-MODULE_INFO(srcversion, "E9C2C4E6B24F5242A8BB17E");
+MODULE_INFO(srcversion, "024B9E24AE4C156FCF46128");
